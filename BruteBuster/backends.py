@@ -4,7 +4,7 @@ from BruteBuster.middleware import get_request
 from django.core.exceptions import ValidationError
 
 
-class BrutebusterBackend(ModelBackend):
+class RateLimitingBackend(ModelBackend):
     def authenticate(self, username=None, password=None):
         request = get_request()
         if request:
@@ -34,7 +34,8 @@ class BrutebusterBackend(ModelBackend):
             # No previous failed attempts
             fa = None
 
-        user = super(BrutebusterBackend, self).authenticate(username, password)
+        user = super(RateLimitingBackend, self).authenticate(username,
+                                                             password)
         if user:
             # the authentication was successful - we do nothing
             # special
