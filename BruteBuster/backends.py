@@ -41,7 +41,7 @@ class BrutebusterBackend(ModelBackend):
             return user
 
         # the authentication was kaput, we should record this
-        fa = fa or FailedAttempt(username=user, IP=IP_ADDR, failures=0)
+        fa = fa or FailedAttempt(username=username, IP=IP_ADDR, failures=0)
         fa.failures += 1
         fa.save()
         # return with unsuccessful auth
