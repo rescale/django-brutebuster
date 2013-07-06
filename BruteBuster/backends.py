@@ -9,7 +9,12 @@ class RateLimitingBackend(ModelBackend):
         request = get_request()
         if request:
             # try to get the remote address from thread locals
-            IP_ADDR = request.META.get('REMOTE_ADDR', None)
+            # First check if the heroku header with the original client IP
+            ip_list = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')
+            IP_ADDR = ip_list[0].strip()
+            if not IP_ADDR:
+                # Otherwise, use the basic REMOTE_ADDR header.
+                IP_ADDR = request.META.get('REMOTE_ADDR', None)
         else:
             IP_ADDR = None
 
