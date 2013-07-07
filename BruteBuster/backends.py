@@ -2,9 +2,6 @@ from django.contrib.auth.backends import ModelBackend
 from BruteBuster.models import FailedAttempt
 from BruteBuster.middleware import get_request
 from django.core.exceptions import ValidationError
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class RateLimitingBackend(ModelBackend):
@@ -12,8 +9,8 @@ class RateLimitingBackend(ModelBackend):
         request = get_request()
         if request:
             # try to get the remote address from thread locals
-            # First check if the heroku header with the original client IP
-            logger.info('request.META: %s', request.META)
+            # First check if the client IP is captured in a different header
+            # by a forwarding proxy.
             ip_list = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')
             IP_ADDR = ip_list[0].strip()
             if not IP_ADDR:
@@ -22,7 +19,6 @@ class RateLimitingBackend(ModelBackend):
         else:
             IP_ADDR = None
 
-        logger.info('IP_ADDR: %s', IP_ADDR)
         try:
             fa = FailedAttempt.objects.filter(username=username, IP=IP_ADDR)[0]
             if fa.recent_failure():
