@@ -1,11 +1,27 @@
-from django.contrib.auth.backends import ModelBackend
 from BruteBuster.models import FailedAttempt
 from BruteBuster.middleware import get_request
 from django.core.exceptions import ValidationError
 
 
-class RateLimitingBackend(ModelBackend):
-    def authenticate(self, username=None, password=None):
+def get_username(**kwargs):
+    return kwargs['username']
+
+def protect_and_serve(auth_func, get_username=get_username):
+    """
+    This is the main code of the application. It is meant to replace the
+    authentication() function, with one that records failed login attempts and
+    blocks logins, if a threshold is reached
+    """
+
+    if hasattr(auth_func, '__BB_PROTECTED__'):
+        # avoiding multiple decorations
+        return auth_func
+
+    def decor(*args, **kwargs):
+        user = get_username(**kwargs)
+        if not user:
+            raise ValueError('BruteBuster could not find a username in the authenticate kwargs')
+        
         request = get_request()
         if request:
             # try to get the remote address from thread locals
@@ -20,7 +36,7 @@ class RateLimitingBackend(ModelBackend):
             IP_ADDR = None
 
         try:
-            fa = FailedAttempt.objects.filter(username=username, IP=IP_ADDR)[0]
+            fa = FailedAttempt.objects.filter(username=user, IP=IP_ADDR)[0]
             if fa.recent_failure():
                 if fa.too_many_failures():
                     # we block the authentication attempt because
@@ -40,16 +56,19 @@ class RateLimitingBackend(ModelBackend):
             # No previous failed attempts
             fa = None
 
-        user = super(RateLimitingBackend, self).authenticate(username,
-                                                             password)
-        if user:
+        result = auth_func(*args, **kwargs)
+        if result:
             # the authentication was successful - we do nothing
             # special
-            return user
+            return result
 
         # the authentication was kaput, we should record this
-        fa = fa or FailedAttempt(username=username, IP=IP_ADDR, failures=0)
+        fa = fa or FailedAttempt(username=user, IP=IP_ADDR, failures=0)
         fa.failures += 1
         fa.save()
         # return with unsuccessful auth
         return None
+    
+    decor.__BB_PROTECTED__ = True
+    return decor
+    
