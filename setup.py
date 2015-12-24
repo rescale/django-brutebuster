@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(\
     name = "django-brutebuster",
-    version = "0.2.2",
+    version = "0.2.3",
     packages = find_packages(),
     author = "Cyber Security Consulting Ltd.",
     author_email = "contact@csc.bg",
