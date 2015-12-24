@@ -26,7 +26,7 @@ BB_BLOCK_INTERVAL = int(getattr(settings, 'BB_BLOCK_INTERVAL', 3))
 
 class FailedAttempt (models.Model):
     username = models.CharField('Username', max_length=255)
-    IP = models.IPAddressField('IP Address', null=True)
+    IP = models.GenericIPAddressField('IP Address', null=True)
     failures = models.PositiveIntegerField('Failures', default=0)
     timestamp = models.DateTimeField('Last failed attempt', auto_now=True)
 
