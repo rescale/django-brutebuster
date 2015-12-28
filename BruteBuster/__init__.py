@@ -4,7 +4,7 @@ Module preventing Brute Force attacks against
 django.contrib.auth.authenticate()
 """
 
-version = '0.2.2'
+version = '0.2.3'
 
 # from django.contrib import auth
 # from BruteBuster.decorators import protect_and_serve
