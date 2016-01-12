@@ -1,6 +1,15 @@
 from BruteBuster.models import FailedAttempt
 from BruteBuster.middleware import get_request
+from django.conf import settings
 from django.core.exceptions import ValidationError
+
+
+LOCKOUT_MESSAGE = getattr(
+    settings,
+    'BB_LOCKOUT_MESSAGE',
+    'Your account is temporarily locked out. Please try again later or '
+    'contact support for assistance.'
+)
 
 
 def get_username(**kwargs):
@@ -44,9 +53,7 @@ def protect_and_serve(auth_func, get_username=get_username):
                     fa.failures += 1
                     fa.save()
                     # Raise validation error
-                    raise ValidationError('Your account is temporarily '
-                                          'locked out. Please try again later '
-                                          'or contact support for assistance.')
+                    raise ValidationError(LOCKOUT_MESSAGE)
             else:
                 # the block interval is over, so let's start
                 # with a clean sheet
